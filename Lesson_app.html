@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수업 기록</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+  :root {
+    --purple: #3C3489; --purple-l: #EEEDFE; --purple-m: #7F77DD;
+    --teal: #085041; --teal-l: #E1F5EE; --teal-m: #1D9E75;
+    --amber: #633806; --amber-l: #FAEEDA; --amber-m: #BA7517;
+    --coral: #712B13; --coral-l: #FAECE7; --coral-m: #D85A30;
+    --blue: #0C447C; --blue-l: #E6F1FB; --blue-m: #378ADD;
+    --green: #27500A; --green-l: #EAF3DE; --green-m: #639922;
+    --red: #791F1F; --red-l: #FCEBEB; --red-m: #E24B4A;
+    --gray: #444441; --gray-l: #F1EFE8; --gray-m: #888780;
+    --bg: #F7F6F2; --white: #FFFFFF;
+    --border: rgba(0,0,0,0.08);
+    --text: #1a1a18; --text2: #5F5E5A; --text3: #9B9A93;
+    --radius: 12px; --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 14px; }
+  body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .app { max-width: 480px; margin: 0 auto; padding: 0 0 80px; }
+
+  /* 탑바 */
+  .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 14px 16px; position: sticky; top: 0; z-index: 100; }
+  .topbar-inner { display: flex; align-items: center; justify-content: space-between; }
+  .topbar-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .topbar-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .student-switch { display: flex; gap: 6px; }
+  .student-btn { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; border: 1px solid var(--border); background: var(--bg); color: var(--text2); cursor: pointer; transition: all .15s; font-family: inherit; }
+  .student-btn.active { background: var(--purple); color: var(--purple-l); border-color: var(--purple); }
+
+  /* 탭 */
+  .tabs { display: flex; background: var(--white); border-bottom: 1px solid var(--border); padding: 0 16px; }
+  .tab { flex: 1; padding: 12px 0; font-size: 12px; font-weight: 500; color: var(--text3); text-align: center; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
+  .tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+
+  /* 패널 */
+  .panel { display: none; padding: 14px 16px; }
+  .panel.active { display: block; }
+
+  /* 섹션 헤더 */
+  .section-hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; margin-top: 16px; }
+  .section-hdr:first-child { margin-top: 0; }
+  .section-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.02em; }
+
+  /* 항목 카드 */
+  .items-card { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; margin-bottom: 4px; }
+  .item-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .item-row:last-child { border-bottom: none; }
+  .item-text { flex: 1; font-size: 12px; color: var(--text); line-height: 1.4; }
+  .item-code { font-size: 10px; color: var(--text3); min-width: 40px; text-align: right; }
+  .status-btns { display: flex; gap: 3px; flex-shrink: 0; }
+  .sbtn { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--bg); cursor: pointer; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all .12s; color: var(--text3); font-family: inherit; }
+  .sbtn:hover { border-color: var(--gray-m); }
+  .sbtn.good { background: var(--green-l); border-color: var(--green-m); color: var(--green); }
+  .sbtn.mid  { background: var(--amber-l); border-color: var(--amber-m); color: var(--amber); }
+  .sbtn.bad  { background: var(--red-l); border-color: var(--red-m); color: var(--red); }
+
+  /* 메모 */
+  .memo-wrap { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); padding: 10px 12px; margin-top: 12px; }
+  .memo-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+  textarea { width: 100%; border: none; outline: none; font-size: 12px; color: var(--text); font-family: inherit; resize: none; height: 60px; background: transparent; line-height: 1.6; }
+  textarea::placeholder { color: var(--text3); }
+
+  /* 저장 버튼 */
+  .save-btn { width: 100%; padding: 14px; border-radius: var(--radius); background: var(--purple); color: var(--purple-l); font-size: 13px; font-weight: 700; border: none; cursor: pointer; margin-top: 14px; font-family: inherit; transition: all .15s; letter-spacing: 0.02em; }
+  .save-btn:hover { background: #534AB7; }
+  .save-btn:active { transform: scale(0.98); }
+  .save-btn.saving { background: var(--gray-m); }
+  .save-btn.done { background: var(--green-m); }
+
+  /* 날짜 선택 */
+  .date-row { display: flex; align-items: center; gap: 10px; background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); padding: 10px 14px; margin-bottom: 14px; }
+  .date-label { font-size: 11px; color: var(--text3); }
+  input[type="date"] { border: none; outline: none; font-size: 12px; font-weight: 500; color: var(--text); font-family: inherit; background: transparent; cursor: pointer; }
+
+  /* 학부모 화면 */
+  .parent-header { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--purple-l); color: var(--purple); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .parent-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .parent-date { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .result-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+  .result-title { font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+  .result-item { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 5px; font-size: 11px; color: var(--text); line-height: 1.4; }
+  .result-item:last-child { margin-bottom: 0; }
+  .rdot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+  .rdot-g { background: var(--green-m); }
+  .rdot-y { background: var(--amber-m); }
+  .rdot-r { background: var(--red-m); }
+
+  .strength-box { background: var(--purple-l); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 8px; }
+  .strength-label { font-size: 10px; font-weight: 700; color: var(--purple-m); margin-bottom: 4px; letter-spacing: 0.04em; }
+  .strength-text { font-size: 12px; color: var(--purple); line-height: 1.6; }
+  .next-box { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; }
+  .next-label { font-size: 10px; font-weight: 700; color: var(--text3); margin-bottom: 4px; letter-spacing: 0.04em; }
+  .next-text { font-size: 12px; color: var(--text); line-height: 1.6; }
+
+  /* 히스토리 */
+  .history-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 10px; }
+  .history-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
+  .history-row:last-child { border-bottom: none; }
+  .history-row:hover { background: var(--bg); }
+  .h-date { font-size: 11px; color: var(--text2); min-width: 68px; font-weight: 500; }
+  .h-bars { flex: 1; display: flex; gap: 2px; align-items: center; }
+  .hbar { height: 5px; border-radius: 3px; transition: width .3s; }
+  .h-arrow { font-size: 12px; color: var(--text3); }
+
+  .trend-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-top: 10px; }
+  .trend-title { font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 12px; }
+  .trend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .trend-row:last-child { margin-bottom: 0; }
+  .trend-label { font-size: 11px; color: var(--text2); min-width: 72px; }
+  .trend-bar-bg { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .trend-bar-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+  .trend-pct { font-size: 10px; min-width: 26px; text-align: right; font-weight: 500; }
+
+  /* 공유 링크 안내 */
+  .share-box { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px; }
+  .share-label { font-size: 10px; font-weight: 700; color: var(--text3); letter-spacing: 0.04em; margin-bottom: 6px; }
+  .share-link { display: flex; gap: 8px; align-items: center; }
+  .share-url { flex: 1; font-size: 11px; color: var(--blue); background: var(--blue-l); padding: 6px 10px; border-radius: var(--radius-sm); word-break: break-all; }
+  .copy-btn { padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg); font-size: 11px; font-weight: 500; cursor: pointer; font-family: inherit; color: var(--text2); white-space: nowrap; }
+  .copy-btn:active { background: var(--green-l); color: var(--green); }
+
+  .notice-box { background: var(--teal-l); border-radius: var(--radius); padding: 10px 14px; margin-bottom: 14px; font-size: 11px; color: var(--teal); line-height: 1.6; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 12px; line-height: 1.8; }
+
+  .setup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg); z-index: 999; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .setup-card { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); padding: 24px; width: 100%; max-width: 400px; }
+  .setup-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .setup-sub { font-size: 12px; color: var(--text3); margin-bottom: 20px; line-height: 1.6; }
+  .setup-label { font-size: 11px; font-weight: 700; color: var(--text2); margin-bottom: 6px; letter-spacing: 0.04em; }
+  .setup-input { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 12px; font-family: inherit; color: var(--text); background: var(--bg); margin-bottom: 14px; outline: none; }
+  .setup-input:focus { border-color: var(--purple-m); }
+  .setup-btn { width: 100%; padding: 12px; border-radius: var(--radius-sm); background: var(--purple); color: var(--purple-l); font-size: 13px; font-weight: 700; border: none; cursor: pointer; font-family: inherit; }
+  .setup-btn:hover { background: #534AB7; }
+  .settings-link { text-align: center; padding: 10px; font-size: 11px; color: var(--text3); cursor: pointer; text-decoration: underline; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<div id="setup-overlay" class="setup-overlay" style="display:none">
+  <div class="setup-card">
+    <div class="setup-title">초기 설정</div>
+    <div class="setup-sub">노션 연동을 위해 아래 정보를 한 번만 입력해주세요.<br>입력 후 기기에 저장되며 다시 입력할 필요 없어요.</div>
+    <div class="setup-label">NOTION API 키</div>
+    <input class="setup-input" id="setup-token" type="password" placeholder="secret_xxxxxxxxxxxxxxxx">
+    <div class="setup-label">NOTION DB ID</div>
+    <input class="setup-input" id="setup-dbid" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+    <button class="setup-btn" onclick="saveSetup()">저장하고 시작하기</button>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <div class="topbar-title">수업 기록</div>
+        <div class="topbar-sub" id="topbar-date">2026년 5월</div>
+      </div>
+      <div class="student-switch">
+        <button class="student-btn active" onclick="switchStudent('이안')">이안</button>
+        <button class="student-btn" onclick="switchStudent('재이')">재이</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('teacher')">수업 입력</div>
+    <div class="tab" onclick="switchTab('parent')">학부모 화면</div>
+    <div class="tab" onclick="switchTab('history')">기록 히스토리</div>
+  </div>
+
+  <!-- 수업 입력 -->
+  <div class="panel active" id="panel-teacher">
+    <div class="date-row">
+      <span class="date-label">수업일</span>
+      <input type="date" id="lesson-date">
+    </div>
+
+    <div id="items-area"></div>
+
+    <div class="memo-wrap">
+      <div class="memo-label">메모 (선생님만 보임)</div>
+      <textarea id="memo-input" placeholder="특이사항, 다음 수업 계획 등..."></textarea>
+    </div>
+
+    <div class="memo-wrap" style="margin-top:8px;">
+      <div class="memo-label">학부모 공유 메시지</div>
+      <textarea id="parent-msg" placeholder="학부모에게 전달할 내용 (예: 다음 수업 집중 목표 등)..."></textarea>
+    </div>
+
+    <button class="save-btn" id="save-btn" onclick="saveLesson()">노션에 저장 · 학부모 공유</button>
+  </div>
+
+  <!-- 학부모 화면 -->
+  <div class="panel" id="panel-parent">
+    <div id="parent-area">
+      <div class="empty-state">아직 저장된 수업 기록이 없어요<br>수업 입력 탭에서 저장해주세요</div>
+    </div>
+  </div>
+
+  <!-- 히스토리 -->
+  <div class="panel" id="panel-history">
+    <div id="history-area">
+      <div class="empty-state">아직 저장된 기록이 없어요</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const NOTION_TOKEN = localStorage.getItem('notion_token') || '';
+const DB_ID = localStorage.getItem('notion_db_id') || '';
+const PROXY = 'https://api.allorigins.win/raw?url=';
+
+let currentStudent = '이안';
+let sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
+
+const STUDENTS = {
+  '이안': {
+    color: '--purple',
+    sections: [
+      {
+        name: '날짜·날씨',
+        badge: { bg: '#E6F1FB', color: '#0C447C' },
+        items: [
+          { text: '오늘 요일 즉답', code: 'B-1' },
+          { text: '달력에서 오늘·어제·내일 찾기', code: 'B-1·B-2' },
+          { text: '시제(이었어요·이에요) 적용', code: 'C-2·C-3' },
+          { text: '하늘 보고 맑음·흐림 변별', code: 'A-1' },
+          { text: '평일·주말 구분', code: 'D-2' },
+          { text: '달력 1~31일 붙이기', code: 'B-3' },
+        ]
+      },
+      {
+        name: '한글',
+        badge: { bg: '#FAEEDA', color: '#633806' },
+        items: [
+          { text: '쌍자음·단자음 변별', code: 'A-3' },
+          { text: '목 힘 빼기', code: 'A-0' },
+          { text: '모음 입술 모양 크게 잡기', code: 'A-1' },
+          { text: '억양 끝음 올리기 교정', code: 'A-5' },
+          { text: '받침 글자 정확하게 읽기', code: 'A-4' },
+        ]
+      },
+      {
+        name: '소근육·단추',
+        badge: { bg: '#FAECE7', color: '#712B13' },
+        items: [
+          { text: '왼손 단추 끼우고 풀기', code: 'C-3·C-4' },
+          { text: '오른손 단추 잠그기', code: 'C-5' },
+          { text: '엄지 지지 + 검지·중지 벌리기', code: 'C-5' },
+          { text: '손끝 핀치 연습', code: 'A-0' },
+        ]
+      },
+      {
+        name: '태도·강점',
+        badge: { bg: '#E1F5EE', color: '#085041' },
+        items: [
+          { text: '짜증 없이 열심히 참여', code: '' },
+          { text: '감정 스스로 조절', code: '' },
+          { text: '"끝까지 해요" 스스로 화이팅', code: '' },
+          { text: '트림·재채기 매너', code: '' },
+        ]
+      }
+    ]
+  },
+  '재이': {
+    color: '--teal',
+    sections: [
+      {
+        name: '날짜',
+        badge: { bg: '#EEEDFE', color: '#3C3489' },
+        items: [
+          { text: '오늘 날짜 상기하기', code: 'B-3' },
+          { text: '달력 일자·요일 읽기', code: 'A-1·B-2' },
+          { text: '어제·오늘·내일 시제 구분', code: 'C-1·C-2' },
+          { text: '평일·주말 구분', code: 'B-5' },
+        ]
+      },
+      {
+        name: '날씨',
+        badge: { bg: '#E1F5EE', color: '#085041' },
+        items: [
+          { text: '하늘 보고 맑음·흐림 변별', code: 'A-1' },
+          { text: '날씨 어휘로 문장 표현', code: 'C-2·C-3' },
+          { text: '네이버 날씨 검색', code: 'D-2' },
+        ]
+      },
+      {
+        name: '한글·어휘',
+        badge: { bg: '#FAEEDA', color: '#633806' },
+        items: [
+          { text: '받침 글자 읽기', code: 'B-3·A-4' },
+          { text: '쌍자음·단자음 변별', code: 'B-1·C-2' },
+          { text: '억양 끝음 올리기 교정', code: 'A-3' },
+          { text: '문장 부호 이름 쓰기', code: 'D-1' },
+        ]
+      },
+      {
+        name: '일상 식사',
+        badge: { bg: '#F1EFE8', color: '#5F5E5A' },
+        items: [
+          { text: '아침·점심·저녁 구별', code: 'A-1' },
+          { text: '식사 문장으로 표현', code: 'B-1' },
+          { text: '쉼표·마침표 사용', code: 'B-2' },
+        ]
+      }
+    ]
+  }
+};
+
+let itemStates = {};
+
+function getTodayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function init() {
+  document.getElementById('lesson-date').value = getTodayStr();
+  updateTopbarDate();
+  renderItems();
+}
+
+function updateTopbarDate() {
+  const d = new Date();
+  document.getElementById('topbar-date').textContent =
+    `${d.getFullYear()}년 ${d.getMonth()+1}월`;
+}
+
+function switchStudent(name) {
+  currentStudent = name;
+  itemStates = {};
+  document.querySelectorAll('.student-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === name);
+  });
+  renderItems();
+  renderParent();
+  renderHistory();
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const ids = ['teacher','parent','history'];
+    t.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if (id === 'parent') renderParent();
+  if (id === 'history') renderHistory();
+}
+
+function renderItems() {
+  const student = STUDENTS[currentStudent];
+  const area = document.getElementById('items-area');
+  area.innerHTML = '';
+
+  student.sections.forEach((sec, si) => {
+    const hdr = document.createElement('div');
+    hdr.className = 'section-hdr';
+    hdr.innerHTML = `<span class="section-badge" style="background:${sec.badge.bg};color:${sec.badge.color}">${sec.name}</span>`;
+    area.appendChild(hdr);
+
+    const card = document.createElement('div');
+    card.className = 'items-card';
+
+    sec.items.forEach((item, ii) => {
+      const key = `${si}-${ii}`;
+      if (!itemStates[key]) itemStates[key] = null;
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML = `
+        <div class="status-btns">
+          <button class="sbtn ${itemStates[key]==='good'?'good':''}" onclick="setState('${key}','good',this)">✓</button>
+          <button class="sbtn ${itemStates[key]==='mid'?'mid':''}" onclick="setState('${key}','mid',this)">△</button>
+          <button class="sbtn ${itemStates[key]==='bad'?'bad':''}" onclick="setState('${key}','bad',this)">✗</button>
+        </div>
+        <span class="item-text">${item.text}</span>
+        <span class="item-code">${item.code}</span>
+      `;
+      card.appendChild(row);
+    });
+
+    area.appendChild(card);
+  });
+}
+
+function setState(key, val, btn) {
+  itemStates[key] = val;
+  const btns = btn.closest('.status-btns').querySelectorAll('.sbtn');
+  btns.forEach(b => b.classList.remove('good','mid','bad'));
+  btn.classList.add(val);
+}
+
+async function saveLesson() {
+  const btn = document.getElementById('save-btn');
+  const date = document.getElementById('lesson-date').value;
+  const memo = document.getElementById('memo-input').value;
+  const parentMsg = document.getElementById('parent-msg').value;
+  const student = STUDENTS[currentStudent];
+
+  btn.textContent = '저장 중...';
+  btn.classList.add('saving');
+  btn.disabled = true;
+
+  const results = [];
+  let hasAny = false;
+
+  student.sections.forEach((sec, si) => {
+    sec.items.forEach((item, ii) => {
+      const key = `${si}-${ii}`;
+      const state = itemStates[key];
+      if (state) {
+        hasAny = true;
+        results.push({ section: sec.name, text: item.text, code: item.code, state });
+      }
+    });
+  });
+
+  if (!hasAny) {
+    btn.textContent = '최소 하나 이상 선택해주세요';
+    btn.classList.remove('saving');
+    btn.disabled = false;
+    setTimeout(() => { btn.textContent = '노션에 저장 · 학부모 공유'; }, 2000);
+    return;
+  }
+
+  const session = {
+    id: Date.now(),
+    student: currentStudent,
+    date,
+    results,
+    memo,
+    parentMsg,
+    savedAt: new Date().toISOString()
+  };
+
+  sessions.unshift(session);
+  localStorage.setItem('sessions', JSON.stringify(sessions));
+
+  try {
+    await saveToNotion(session);
+    btn.textContent = '저장 완료! 학부모 화면에 반영됐어요';
+    btn.classList.remove('saving');
+    btn.classList.add('done');
+  } catch(e) {
+    btn.textContent = '로컬 저장 완료 (노션 연결 확인 필요)';
+    btn.classList.remove('saving');
+    btn.style.background = '#BA7517';
+  }
+
+  btn.disabled = false;
+  setTimeout(() => {
+    btn.textContent = '노션에 저장 · 학부모 공유';
+    btn.classList.remove('done');
+    btn.style.background = '';
+  }, 3000);
+}
+
+async function saveToNotion(session) {
+  for (const r of session.results) {
+    const statusMap = { good: '잘함', mid: '보통', bad: '개선필요' };
+    const body = {
+      parent: { database_id: DB_ID },
+      properties: {
+        '이름': { title: [{ text: { content: `${session.student} · ${r.text}` } }] },
+        '학생': { select: { name: session.student } },
+        '날짜': { date: { start: session.date } },
+        '영역': { select: { name: r.section } },
+        '항목': { rich_text: [{ text: { content: r.text } }] },
+        '목표코드': { rich_text: [{ text: { content: r.code } }] },
+        '상태': { select: { name: statusMap[r.state] } },
+        '메모': { rich_text: [{ text: { content: session.parentMsg || '' } }] },
+      }
+    };
+
+    const url = encodeURIComponent('https://api.notion.com/v1/pages');
+    await fetch(`${PROXY}${url}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-requested-url': 'https://api.notion.com/v1/pages',
+        'Authorization': `Bearer ${NOTION_TOKEN}`,
+        'Notion-Version': '2022-06-28'
+      },
+      body: JSON.stringify(body)
+    });
+  }
+}
+
+function renderParent() {
+  const area = document.getElementById('parent-area');
+  const studentSessions = sessions.filter(s => s.student === currentStudent);
+
+  if (studentSessions.length === 0) {
+    area.innerHTML = '<div class="empty-state">아직 저장된 수업 기록이 없어요<br>수업 입력 탭에서 저장해주세요</div>';
+    return;
+  }
+
+  const latest = studentSessions[0];
+  const dateStr = new Date(latest.date).toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+  const student = STUDENTS[currentStudent];
+
+  const sectionMap = {};
+  latest.results.forEach(r => {
+    if (!sectionMap[r.section]) sectionMap[r.section] = [];
+    sectionMap[r.section].push(r);
+  });
+
+  const goodItems = latest.results.filter(r => r.state === 'good');
+  const midItems = latest.results.filter(r => r.state === 'mid');
+  const badItems = latest.results.filter(r => r.state === 'bad');
+
+  let gridHTML = '';
+  Object.entries(sectionMap).forEach(([sec, items]) => {
+    const secDef = student.sections.find(s => s.name === sec);
+    const badge = secDef ? secDef.badge : { color: '#333' };
+    gridHTML += `<div class="result-card">
+      <div class="result-title" style="color:${badge.color}">${sec}</div>`;
+    items.forEach(item => {
+      const dot = item.state === 'good' ? 'rdot-g' : item.state === 'mid' ? 'rdot-y' : 'rdot-r';
+      gridHTML += `<div class="result-item"><div class="rdot ${dot}"></div>${item.text}</div>`;
+    });
+    gridHTML += '</div>';
+  });
+
+  const strengths = goodItems.filter(r => r.section === '태도·강점').map(r => r.text);
+  const nextFocus = badItems.concat(midItems.filter(r => r.section !== '태도·강점')).slice(0,2).map(r => r.text);
+
+  area.innerHTML = `
+    <div class="parent-header">
+      <div class="avatar">${currentStudent}</div>
+      <div>
+        <div class="parent-name">${currentStudent} 수업 결과</div>
+        <div class="parent-date">${dateStr}</div>
+      </div>
+    </div>
+    <div class="result-grid">${gridHTML}</div>
+    ${strengths.length ? `<div class="strength-box">
+      <div class="strength-label">이번 수업 강점</div>
+      <div class="strength-text">${strengths.join(' · ')}</div>
+    </div>` : ''}
+    ${nextFocus.length ? `<div class="next-box">
+      <div class="next-label">다음 수업 집중 목표</div>
+      <div class="next-text">${nextFocus.join(', ')} — 다음 수업에서 집중적으로 다룰 예정이에요</div>
+    </div>` : ''}
+    ${latest.parentMsg ? `<div class="next-box" style="margin-top:8px">
+      <div class="next-label">선생님 메시지</div>
+      <div class="next-text">${latest.parentMsg}</div>
+    </div>` : ''}
+  `;
+}
+
+function renderHistory() {
+  const area = document.getElementById('history-area');
+  const studentSessions = sessions.filter(s => s.student === currentStudent);
+
+  if (studentSessions.length === 0) {
+    area.innerHTML = '<div class="empty-state">아직 저장된 기록이 없어요</div>';
+    return;
+  }
+
+  const trendMap = {};
+  studentSessions.forEach(s => {
+    s.results.forEach(r => {
+      if (!trendMap[r.text]) trendMap[r.text] = { good: 0, total: 0 };
+      trendMap[r.text].total++;
+      if (r.state === 'good') trendMap[r.text].good++;
+    });
+  });
+
+  const topItems = Object.entries(trendMap)
+    .filter(([,v]) => v.total >= 2)
+    .sort((a,b) => b[1].total - a[1].total)
+    .slice(0, 5);
+
+  let histHTML = '<div class="history-card">';
+  studentSessions.slice(0,5).forEach(s => {
+    const good = s.results.filter(r => r.state === 'good').length;
+    const mid = s.results.filter(r => r.state === 'mid').length;
+    const bad = s.results.filter(r => r.state === 'bad').length;
+    const total = s.results.length || 1;
+    const dateStr = new Date(s.date).toLocaleDateString('ko-KR', { month:'numeric', day:'numeric', weekday:'short' });
+    histHTML += `<div class="history-row">
+      <span class="h-date">${dateStr}</span>
+      <div class="h-bars">
+        <div class="hbar" style="width:${Math.round(good/total*100)}%;background:#639922"></div>
+        <div class="hbar" style="width:2%;background:rgba(0,0,0,0.06)"></div>
+        <div class="hbar" style="width:${Math.round(mid/total*100)}%;background:#BA7517"></div>
+        <div class="hbar" style="width:2%;background:rgba(0,0,0,0.06)"></div>
+        <div class="hbar" style="width:${Math.round(bad/total*100)}%;background:#E24B4A"></div>
+      </div>
+      <span class="h-arrow">›</span>
+    </div>`;
+  });
+  histHTML += '</div>';
+
+  if (topItems.length > 0) {
+    histHTML += `<div class="trend-card"><div class="trend-title">항목별 진전 추이</div>`;
+    topItems.forEach(([label, v]) => {
+      const pct = Math.round(v.good / v.total * 100);
+      const color = pct >= 70 ? '#639922' : pct >= 40 ? '#BA7517' : '#E24B4A';
+      const textColor = pct >= 70 ? '#27500A' : pct >= 40 ? '#633806' : '#791F1F';
+      histHTML += `<div class="trend-row">
+        <span class="trend-label">${label.length > 9 ? label.slice(0,9)+'…' : label}</span>
+        <div class="trend-bar-bg"><div class="trend-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        <span class="trend-pct" style="color:${textColor}">${pct}%</span>
+      </div>`;
+    });
+    histHTML += '</div>';
+  }
+
+  area.innerHTML = histHTML;
+}
+
+function saveSetup() {
+  const token = document.getElementById('setup-token').value.trim();
+  const dbid = document.getElementById('setup-dbid').value.trim();
+  if (!token || !dbid) { alert('두 항목 모두 입력해주세요'); return; }
+  localStorage.setItem('notion_token', token);
+  localStorage.setItem('notion_db_id', dbid);
+  document.getElementById('setup-overlay').style.display = 'none';
+}
+
+function checkSetup() {
+  const token = localStorage.getItem('notion_token');
+  const dbid = localStorage.getItem('notion_db_id');
+  if (!token || !dbid) {
+    document.getElementById('setup-overlay').style.display = 'flex';
+  }
+}
+
+function init() {
+  checkSetup();
+  document.getElementById('lesson-date').value = getTodayStr();
+  updateTopbarDate();
+  renderItems();
+}
+
+init();
+</script>
+</body>
+</html>
