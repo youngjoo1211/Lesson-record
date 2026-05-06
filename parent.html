@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수업 결과</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+  :root {
+    --purple:#3C3489;--purple-l:#EEEDFE;--purple-m:#7F77DD;
+    --teal:#085041;--teal-l:#E1F5EE;--teal-m:#1D9E75;
+    --amber:#633806;--amber-l:#FAEEDA;--amber-m:#BA7517;
+    --coral:#712B13;--coral-l:#FAECE7;
+    --blue:#0C447C;--blue-l:#E6F1FB;
+    --green:#27500A;--green-l:#EAF3DE;--green-m:#639922;
+    --red:#791F1F;--red-l:#FCEBEB;--red-m:#E24B4A;
+    --gray-l:#F1EFE8;--gray-m:#888780;
+    --bg:#F7F6F2;--white:#FFFFFF;
+    --border:rgba(0,0,0,0.08);
+    --text:#1a1a18;--text2:#5F5E5A;--text3:#9B9A93;
+    --r:12px;--rs:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  .app{max-width:480px;margin:0 auto;padding:16px 16px 40px;}
+  .header{background:var(--white);border-radius:var(--r);border:1px solid var(--border);padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;}
+  .avatar{width:44px;height:44px;border-radius:50%;background:var(--purple-l);color:var(--purple);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
+  .header-name{font-size:15px;font-weight:700;}
+  .header-date{font-size:11px;color:var(--text3);margin-top:2px;}
+  .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+  .result-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;}
+  .result-title{font-size:11px;font-weight:700;margin-bottom:8px;}
+  .result-item{display:flex;align-items:flex-start;gap:6px;margin-bottom:5px;font-size:11px;color:var(--text);line-height:1.4;}
+  .result-item:last-child{margin-bottom:0;}
+  .rdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+  .rdot-g{background:var(--green-m);}
+  .rdot-y{background:var(--amber-m);}
+  .rdot-r{background:var(--red-m);}
+  .strength-box{background:var(--purple-l);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;}
+  .strength-label{font-size:10px;font-weight:700;color:var(--purple-m);margin-bottom:4px;letter-spacing:0.04em;}
+  .strength-text{font-size:12px;color:var(--purple);line-height:1.6;}
+  .msg-box{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;}
+  .msg-label{font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px;letter-spacing:0.04em;}
+  .msg-text{font-size:12px;color:var(--text);line-height:1.6;}
+  .history-section{margin-top:16px;}
+  .section-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;}
+  .trend-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;}
+  .trend-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .trend-row:last-child{margin-bottom:0;}
+  .trend-label{font-size:11px;color:var(--text2);min-width:80px;}
+  .trend-bar-bg{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+  .trend-bar-fill{height:100%;border-radius:3px;}
+  .trend-pct{font-size:10px;min-width:26px;text-align:right;font-weight:500;}
+  .loading{text-align:center;padding:60px 20px;color:var(--text3);font-size:13px;line-height:1.8;}
+  .error{text-align:center;padding:40px 20px;color:var(--red);font-size:12px;line-height:1.8;}
+  .legend{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+  .leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);}
+  .leg-dot{width:7px;height:7px;border-radius:50%;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="content"><div class="loading">수업 기록을 불러오는 중이에요...</div></div>
+</div>
+<script>
+const API = '/.netlify/functions/notion-api';
+const SECTION_COLORS = {
+  '날짜·날씨':{color:'#0C447C'},'날짜':{color:'#3C3489'},
+  '한글':{color:'#633806'},'한글·어휘':{color:'#633806'},
+  '소근육·단추':{color:'#712B13'},'태도·강점':{color:'#085041'},
+  '날씨':{color:'#085041'},'일상 식사':{color:'#5F5E5A'},
+};
+
+async function load(){
+  const params = new URLSearchParams(window.location.search);
+  const student = params.get('student') || '이안';
+  document.title = `${student} 수업 결과`;
+
+  try{
+    const res = await fetch(`${API}?student=${encodeURIComponent(student)}`);
+    const data = await res.json();
+
+    if(!data.results||!data.results.length){
+      document.getElementById('content').innerHTML=
+        '<div class="loading">아직 저장된 수업 기록이 없어요<br>선생님이 수업을 저장하면 여기에 표시돼요</div>';
+      return;
+    }
+
+    const byDate={};
+    data.results.forEach(page=>{
+      const props=page.properties;
+      const date=props['날짜']?.date?.start||'';
+      if(!byDate[date]) byDate[date]=[];
+      byDate[date].push({
+        section:props['영역']?.select?.name||'',
+        text:props['항목']?.rich_text?.[0]?.text?.content||'',
+        state:props['상태']?.select?.name||'',
+        msg:props['메모']?.rich_text?.[0]?.text?.content||'',
+      });
+    });
+
+    const dates=Object.keys(byDate).sort((a,b)=>b.localeCompare(a));
+    const latest=byDate[dates[0]];
+    const latestDate=new Date(dates[0]);
+    const dateStr=latestDate.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+
+    const sectionMap={};
+    latest.forEach(item=>{
+      if(!sectionMap[item.section]) sectionMap[item.section]=[];
+      sectionMap[item.section].push(item);
+    });
+
+    const goodItems=latest.filter(i=>i.state==='잘함');
+    const badItems=latest.filter(i=>i.state==='개선필요');
+    const midItems=latest.filter(i=>i.state==='보통');
+    const strengths=goodItems.filter(i=>i.section==='태도·강점').map(i=>i.text);
+    const parentMsg=latest.find(i=>i.msg)?.msg||'';
+    const nextFocus=badItems.filter(i=>i.section!=='태도·강점').slice(0,2).map(i=>i.text);
+
+    let gridHTML='';
+    Object.entries(sectionMap).forEach(([sec,items])=>{
+      const c=(SECTION_COLORS[sec]||{color:'#333'}).color;
+      gridHTML+=`<div class="result-card"><div class="result-title" style="color:${c}">${sec}</div>`;
+      items.forEach(item=>{
+        const dot=item.state==='잘함'?'rdot-g':item.state==='보통'?'rdot-y':'rdot-r';
+        gridHTML+=`<div class="result-item"><div class="rdot ${dot}"></div>${item.text}</div>`;
+      });
+      gridHTML+='</div>';
+    });
+
+    const trendMap={};
+    Object.values(byDate).forEach(items=>{
+      items.forEach(item=>{
+        if(item.section==='태도·강점') return;
+        if(!trendMap[item.text]) trendMap[item.text]={good:0,total:0};
+        trendMap[item.text].total++;
+        if(item.state==='잘함') trendMap[item.text].good++;
+      });
+    });
+    const topItems=Object.entries(trendMap).filter(([,v])=>v.total>=2).sort((a,b)=>b[1].total-a[1].total).slice(0,5);
+
+    let trendHTML='';
+    if(topItems.length){
+      trendHTML=`<div class="history-section">
+        <div class="section-title">이번 달 진전 추이</div>
+        <div class="trend-card">
+          <div class="legend">
+            <div class="leg"><div class="leg-dot" style="background:#639922"></div>잘함</div>
+            <div class="leg"><div class="leg-dot" style="background:#BA7517"></div>연습 중</div>
+            <div class="leg"><div class="leg-dot" style="background:#E24B4A"></div>집중 필요</div>
+          </div>`;
+      topItems.forEach(([label,v])=>{
+        const pct=Math.round(v.good/v.total*100);
+        const color=pct>=70?'#639922':pct>=40?'#BA7517':'#E24B4A';
+        const tc=pct>=70?'#27500A':pct>=40?'#633806':'#791F1F';
+        trendHTML+=`<div class="trend-row">
+          <span class="trend-label">${label.length>10?label.slice(0,10)+'…':label}</span>
+          <div class="trend-bar-bg"><div class="trend-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+          <span class="trend-pct" style="color:${tc}">${pct}%</span>
+        </div>`;
+      });
+      trendHTML+='</div></div>';
+    }
+
+    document.getElementById('content').innerHTML=`
+      <div class="header">
+        <div class="avatar">${student}</div>
+        <div>
+          <div class="header-name">${student} 수업 결과</div>
+          <div class="header-date">${dateStr}</div>
+        </div>
+      </div>
+      <div class="result-grid">${gridHTML}</div>
+      ${strengths.length?`<div class="strength-box">
+        <div class="strength-label">이번 수업 강점</div>
+        <div class="strength-text">${strengths.join(' · ')}</div>
+      </div>`:''}
+      ${nextFocus.length?`<div class="msg-box">
+        <div class="msg-label">다음 수업 집중 목표</div>
+        <div class="msg-text">${nextFocus.join(', ')} 부분을 다음 수업에서 집중적으로 다룰 예정이에요</div>
+      </div>`:''}
+      ${parentMsg?`<div class="msg-box">
+        <div class="msg-label">선생님 메시지</div>
+        <div class="msg-text">${parentMsg}</div>
+      </div>`:''}
+      ${trendHTML}
+    `;
+  }catch(e){
+    console.log(e);
+    if(e.message && e.message.includes('results')) {
+      document.getElementById('content').innerHTML=
+        '<div class="loading">아직 저장된 수업 기록이 없어요<br>선생님이 수업을 저장하면 여기에 표시돼요</div>';
+    } else {
+      document.getElementById('content').innerHTML=
+        '<div class="error">불러오기에 실패했어요<br>잠시 후 다시 시도해주세요</div>';
+    }
+  }
+}
+
+load();
+</script>
+</body>
+</html>

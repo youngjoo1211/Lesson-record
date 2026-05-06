@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수업 기록</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+  :root {
+    --purple:#3C3489;--purple-l:#EEEDFE;--purple-m:#7F77DD;
+    --teal:#085041;--teal-l:#E1F5EE;--teal-m:#1D9E75;
+    --amber:#633806;--amber-l:#FAEEDA;--amber-m:#BA7517;
+    --coral:#712B13;--coral-l:#FAECE7;--coral-m:#D85A30;
+    --blue:#0C447C;--blue-l:#E6F1FB;
+    --green:#27500A;--green-l:#EAF3DE;--green-m:#639922;
+    --red:#791F1F;--red-l:#FCEBEB;--red-m:#E24B4A;
+    --gray-l:#F1EFE8;--gray-m:#888780;
+    --bg:#F7F6F2;--white:#FFFFFF;
+    --border:rgba(0,0,0,0.08);
+    --text:#1a1a18;--text2:#5F5E5A;--text3:#9B9A93;
+    --r:12px;--rs:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  .app{max-width:480px;margin:0 auto;padding:0 0 80px;}
+  .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:14px 16px;position:sticky;top:0;z-index:100;}
+  .topbar-inner{display:flex;align-items:center;justify-content:space-between;}
+  .topbar-title{font-size:15px;font-weight:700;}
+  .topbar-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+  .student-switch{display:flex;gap:6px;}
+  .student-btn{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;transition:all .15s;font-family:inherit;}
+  .student-btn.active{background:var(--purple);color:var(--purple-l);border-color:var(--purple);}
+  .tabs{display:flex;background:var(--white);border-bottom:1px solid var(--border);padding:0 16px;}
+  .tab{flex:1;padding:12px 0;font-size:12px;font-weight:500;color:var(--text3);text-align:center;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+  .tab.active{color:var(--purple);border-bottom-color:var(--purple);}
+  .panel{display:none;padding:14px 16px;}
+  .panel.active{display:block;}
+  .section-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:16px;}
+  .section-hdr:first-child{margin-top:0;}
+  .section-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;}
+  .items-card{background:var(--white);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;margin-bottom:4px;}
+  .item-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);}
+  .item-row:last-child{border-bottom:none;}
+  .item-text{flex:1;font-size:12px;color:var(--text);line-height:1.4;}
+  .item-code{font-size:10px;color:var(--text3);min-width:40px;text-align:right;}
+  .status-btns{display:flex;gap:3px;flex-shrink:0;}
+  .sbtn{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .12s;color:var(--text3);font-family:inherit;}
+  .sbtn.good{background:var(--green-l);border-color:var(--green-m);color:var(--green);}
+  .sbtn.mid{background:var(--amber-l);border-color:var(--amber-m);color:var(--amber);}
+  .sbtn.bad{background:var(--red-l);border-color:var(--red-m);color:var(--red);}
+  .memo-wrap{background:var(--white);border-radius:var(--r);border:1px solid var(--border);padding:10px 12px;margin-top:12px;}
+  .memo-label{font-size:11px;color:var(--text3);margin-bottom:6px;}
+  textarea{width:100%;border:none;outline:none;font-size:12px;color:var(--text);font-family:inherit;resize:none;height:60px;background:transparent;line-height:1.6;}
+  textarea::placeholder{color:var(--text3);}
+  .save-btn{width:100%;padding:14px;border-radius:var(--r);background:var(--purple);color:var(--purple-l);font-size:13px;font-weight:700;border:none;cursor:pointer;margin-top:14px;font-family:inherit;transition:all .15s;}
+  .save-btn:hover{background:#534AB7;}
+  .save-btn.done{background:var(--green-m);}
+  .save-btn.err{background:var(--red-m);}
+  .date-row{display:flex;align-items:center;gap:10px;background:var(--white);border-radius:var(--r);border:1px solid var(--border);padding:10px 14px;margin-bottom:14px;}
+  .date-label{font-size:11px;color:var(--text3);}
+  input[type="date"]{border:none;outline:none;font-size:12px;font-weight:500;color:var(--text);font-family:inherit;background:transparent;cursor:pointer;}
+  .history-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px;}
+  .history-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);}
+  .history-row:last-child{border-bottom:none;}
+  .h-date{font-size:11px;color:var(--text2);min-width:68px;font-weight:500;}
+  .h-bars{flex:1;display:flex;gap:2px;align-items:center;}
+  .hbar{height:5px;border-radius:3px;}
+  .trend-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-top:10px;}
+  .trend-title{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:12px;}
+  .trend-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .trend-row:last-child{margin-bottom:0;}
+  .trend-label{font-size:11px;color:var(--text2);min-width:72px;}
+  .trend-bar-bg{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+  .trend-bar-fill{height:100%;border-radius:3px;}
+  .trend-pct{font-size:10px;min-width:26px;text-align:right;font-weight:500;}
+  .empty-state{text-align:center;padding:40px 20px;color:var(--text3);font-size:12px;line-height:1.8;}
+  .share-box{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:12px;}
+  .share-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:0.04em;margin-bottom:6px;}
+  .share-url{font-size:11px;color:var(--blue);background:var(--blue-l);padding:8px 10px;border-radius:var(--rs);word-break:break-all;margin-bottom:6px;}
+  .copy-btn{padding:7px 14px;border-radius:var(--rs);border:1px solid var(--border);background:var(--bg);font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--text2);}
+  .loading{text-align:center;padding:20px;color:var(--text3);font-size:12px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <div class="topbar-title">수업 기록</div>
+        <div class="topbar-sub" id="topbar-date">2026년 5월</div>
+      </div>
+      <div class="student-switch">
+        <button class="student-btn active" onclick="switchStudent('이안')">이안</button>
+        <button class="student-btn" onclick="switchStudent('재이')">재이</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('teacher')">수업 입력</div>
+    <div class="tab" onclick="switchTab('history')">기록 히스토리</div>
+    <div class="tab" onclick="switchTab('share')">공유</div>
+  </div>
+
+  <div class="panel active" id="panel-teacher">
+    <div class="date-row">
+      <span class="date-label">수업일</span>
+      <input type="date" id="lesson-date">
+    </div>
+    <div id="items-area"></div>
+    <div class="memo-wrap">
+      <div class="memo-label">선생님 메모 (비공개)</div>
+      <textarea id="memo-input" placeholder="특이사항, 다음 수업 계획..."></textarea>
+    </div>
+    <div class="memo-wrap" style="margin-top:8px">
+      <div class="memo-label">학부모 공유 메시지</div>
+      <textarea id="parent-msg" placeholder="학부모에게 전달할 내용..."></textarea>
+    </div>
+    <button class="save-btn" id="save-btn" onclick="saveLesson()">노션에 저장 · 학부모 공유</button>
+  </div>
+
+  <div class="panel" id="panel-history">
+    <div id="history-area"><div class="loading">불러오는 중...</div></div>
+  </div>
+
+  <div class="panel" id="panel-share">
+    <div class="share-box">
+      <div class="share-label">학부모 공유 링크</div>
+      <div class="share-url" id="share-url-ian">https://[배포주소]/parent.html?student=이안</div>
+      <button class="copy-btn" onclick="copyLink('이안')">이안 링크 복사</button>
+    </div>
+    <div class="share-box">
+      <div class="share-label">학부모 공유 링크</div>
+      <div class="share-url" id="share-url-jae">https://[배포주소]/parent.html?student=재이</div>
+      <button class="copy-btn" onclick="copyLink('재이')">재이 링크 복사</button>
+    </div>
+    <div style="background:var(--amber-l);border-radius:var(--r);padding:10px 14px;font-size:11px;color:var(--amber);line-height:1.6;">
+      배포 후 실제 주소로 자동 업데이트돼요
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/.netlify/functions/notion-api';
+let currentStudent = '이안';
+let itemStates = {};
+let sessions = [];
+
+const STUDENTS = {
+  '이안': {
+    sections: [
+      { name:'날짜·날씨', badge:{bg:'#E6F1FB',color:'#0C447C'}, items:[
+        {text:'오늘 요일 즉답',code:'B-1'},
+        {text:'달력에서 오늘·어제·내일 찾기',code:'B-1·B-2'},
+        {text:'시제(이었어요·이에요) 적용',code:'C-2·C-3'},
+        {text:'하늘 보고 맑음·흐림 변별',code:'A-1'},
+        {text:'평일·주말 구분',code:'D-2'},
+        {text:'달력 1~31일 붙이기',code:'B-3'},
+      ]},
+      { name:'한글', badge:{bg:'#FAEEDA',color:'#633806'}, items:[
+        {text:'쌍자음·단자음 변별',code:'A-3'},
+        {text:'목 힘 빼기',code:'A-0'},
+        {text:'모음 입술 모양 크게 잡기',code:'A-1'},
+        {text:'억양 끝음 올리기 교정',code:'A-5'},
+        {text:'받침 글자 정확하게 읽기',code:'A-4'},
+      ]},
+      { name:'소근육·단추', badge:{bg:'#FAECE7',color:'#712B13'}, items:[
+        {text:'왼손 단추 끼우고 풀기',code:'C-3·C-4'},
+        {text:'오른손 단추 잠그기',code:'C-5'},
+        {text:'엄지 지지 + 검지·중지 벌리기',code:'C-5'},
+        {text:'손끝 핀치 연습',code:'A-0'},
+      ]},
+      { name:'태도·강점', badge:{bg:'#E1F5EE',color:'#085041'}, items:[
+        {text:'짜증 없이 열심히 참여',code:''},
+        {text:'감정 스스로 조절',code:''},
+        {text:'"끝까지 해요" 스스로 화이팅',code:''},
+        {text:'트림·재채기 매너',code:''},
+      ]},
+    ]
+  },
+  '재이': {
+    sections: [
+      { name:'날짜', badge:{bg:'#EEEDFE',color:'#3C3489'}, items:[
+        {text:'오늘 날짜 상기하기',code:'B-3'},
+        {text:'달력 일자·요일 읽기',code:'A-1·B-2'},
+        {text:'어제·오늘·내일 시제 구분',code:'C-1·C-2'},
+        {text:'평일·주말 구분',code:'B-5'},
+      ]},
+      { name:'날씨', badge:{bg:'#E1F5EE',color:'#085041'}, items:[
+        {text:'하늘 보고 맑음·흐림 변별',code:'A-1'},
+        {text:'날씨 어휘로 문장 표현',code:'C-2·C-3'},
+        {text:'네이버 날씨 검색',code:'D-2'},
+      ]},
+      { name:'한글·어휘', badge:{bg:'#FAEEDA',color:'#633806'}, items:[
+        {text:'받침 글자 읽기',code:'B-3·A-4'},
+        {text:'쌍자음·단자음 변별',code:'B-1·C-2'},
+        {text:'억양 끝음 올리기 교정',code:'A-3'},
+        {text:'문장 부호 이름 쓰기',code:'D-1'},
+      ]},
+      { name:'일상 식사', badge:{bg:'#F1EFE8',color:'#5F5E5A'}, items:[
+        {text:'아침·점심·저녁 구별',code:'A-1'},
+        {text:'식사 문장으로 표현',code:'B-1'},
+        {text:'쉼표·마침표 사용',code:'B-2'},
+      ]},
+    ]
+  }
+};
+
+function getTodayStr(){return new Date().toISOString().split('T')[0];}
+
+function init(){
+  document.getElementById('lesson-date').value = getTodayStr();
+  const d = new Date();
+  document.getElementById('topbar-date').textContent = `${d.getFullYear()}년 ${d.getMonth()+1}월`;
+  const base = window.location.origin + window.location.pathname.replace('Lesson_app.html','');
+  document.getElementById('share-url-ian').textContent = `${base}parent.html?student=이안`;
+  document.getElementById('share-url-jae').textContent = `${base}parent.html?student=재이`;
+  renderItems();
+}
+
+function switchStudent(name){
+  currentStudent = name;
+  itemStates = {};
+  document.querySelectorAll('.student-btn').forEach(b=>b.classList.toggle('active',b.textContent===name));
+  renderItems();
+}
+
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>{
+    t.classList.toggle('active',['teacher','history','share'][i]===id);
+  });
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  if(id==='history') loadHistory();
+}
+
+function renderItems(){
+  const area = document.getElementById('items-area');
+  area.innerHTML = '';
+  STUDENTS[currentStudent].sections.forEach((sec,si)=>{
+    const hdr = document.createElement('div');
+    hdr.className = 'section-hdr';
+    hdr.innerHTML = `<span class="section-badge" style="background:${sec.badge.bg};color:${sec.badge.color}">${sec.name}</span>`;
+    area.appendChild(hdr);
+    const card = document.createElement('div');
+    card.className = 'items-card';
+    sec.items.forEach((item,ii)=>{
+      const key = `${si}-${ii}`;
+      if(!itemStates[key]) itemStates[key]=null;
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML = `
+        <div class="status-btns">
+          <button class="sbtn ${itemStates[key]==='good'?'good':''}" onclick="setState('${key}','good',this)">✓</button>
+          <button class="sbtn ${itemStates[key]==='mid'?'mid':''}" onclick="setState('${key}','mid',this)">△</button>
+          <button class="sbtn ${itemStates[key]==='bad'?'bad':''}" onclick="setState('${key}','bad',this)">✗</button>
+        </div>
+        <span class="item-text">${item.text}</span>
+        <span class="item-code">${item.code}</span>`;
+      card.appendChild(row);
+    });
+    area.appendChild(card);
+  });
+}
+
+function setState(key,val,btn){
+  itemStates[key]=val;
+  btn.closest('.status-btns').querySelectorAll('.sbtn').forEach(b=>b.classList.remove('good','mid','bad'));
+  btn.classList.add(val);
+}
+
+async function saveLesson(){
+  const btn = document.getElementById('save-btn');
+  const date = document.getElementById('lesson-date').value;
+  const memo = document.getElementById('memo-input').value;
+  const parentMsg = document.getElementById('parent-msg').value;
+  const student = STUDENTS[currentStudent];
+  const results = [];
+  student.sections.forEach((sec,si)=>{
+    sec.items.forEach((item,ii)=>{
+      const state = itemStates[`${si}-${ii}`];
+      if(state) results.push({section:sec.name,text:item.text,code:item.code,state});
+    });
+  });
+  if(!results.length){
+    btn.textContent='최소 하나 이상 선택해주세요';
+    setTimeout(()=>{btn.textContent='노션에 저장 · 학부모 공유';},2000);
+    return;
+  }
+  btn.textContent='저장 중...';
+  btn.disabled=true;
+  try{
+    const res = await fetch(API,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({student:currentStudent,date,results,memo,parentMsg})
+    });
+    const data = await res.json();
+    if(data.success){
+      btn.textContent=`저장 완료! ${data.count}개 항목 노션에 기록됐어요`;
+      btn.classList.add('done');
+    } else {
+      throw new Error(data.error);
+    }
+  }catch(e){
+    btn.textContent='저장 실패 — 다시 시도해주세요';
+    btn.classList.add('err');
+  }
+  btn.disabled=false;
+  setTimeout(()=>{
+    btn.textContent='노션에 저장 · 학부모 공유';
+    btn.classList.remove('done','err');
+  },3000);
+}
+
+async function loadHistory(){
+  const area = document.getElementById('history-area');
+  area.innerHTML = '<div class="loading">노션에서 불러오는 중...</div>';
+  try{
+    const res = await fetch(`${API}?student=${encodeURIComponent(currentStudent)}`);
+    const data = await res.json();
+    if(!data.results||!data.results.length){
+      area.innerHTML='<div class="empty-state">아직 저장된 기록이 없어요</div>';
+      return;
+    }
+    const byDate = {};
+    data.results.forEach(page=>{
+      const props = page.properties;
+      const date = props['날짜']?.date?.start || '';
+      if(!byDate[date]) byDate[date]=[];
+      byDate[date].push({
+        section: props['영역']?.select?.name||'',
+        text: props['항목']?.rich_text?.[0]?.text?.content||'',
+        state: props['상태']?.select?.name||'',
+      });
+    });
+    const trendMap = {};
+    Object.values(byDate).forEach(items=>{
+      items.forEach(item=>{
+        if(!trendMap[item.text]) trendMap[item.text]={good:0,total:0};
+        trendMap[item.text].total++;
+        if(item.state==='잘함') trendMap[item.text].good++;
+      });
+    });
+    let html = '<div class="history-card">';
+    Object.entries(byDate).slice(0,5).forEach(([date,items])=>{
+      const good=items.filter(i=>i.state==='잘함').length;
+      const mid=items.filter(i=>i.state==='보통').length;
+      const bad=items.filter(i=>i.state==='개선필요').length;
+      const total=items.length||1;
+      const d=new Date(date);
+      const dateStr=d.toLocaleDateString('ko-KR',{month:'numeric',day:'numeric',weekday:'short'});
+      html+=`<div class="history-row">
+        <span class="h-date">${dateStr}</span>
+        <div class="h-bars">
+          <div class="hbar" style="width:${Math.round(good/total*100)}%;background:#639922"></div>
+          <div class="hbar" style="width:2%;background:rgba(0,0,0,0.06)"></div>
+          <div class="hbar" style="width:${Math.round(mid/total*100)}%;background:#BA7517"></div>
+          <div class="hbar" style="width:2%;background:rgba(0,0,0,0.06)"></div>
+          <div class="hbar" style="width:${Math.round(bad/total*100)}%;background:#E24B4A"></div>
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+    const topItems=Object.entries(trendMap).filter(([,v])=>v.total>=2).sort((a,b)=>b[1].total-a[1].total).slice(0,5);
+    if(topItems.length){
+      html+=`<div class="trend-card"><div class="trend-title">항목별 진전 추이</div>`;
+      topItems.forEach(([label,v])=>{
+        const pct=Math.round(v.good/v.total*100);
+        const color=pct>=70?'#639922':pct>=40?'#BA7517':'#E24B4A';
+        const tc=pct>=70?'#27500A':pct>=40?'#633806':'#791F1F';
+        html+=`<div class="trend-row">
+          <span class="trend-label">${label.length>9?label.slice(0,9)+'…':label}</span>
+          <div class="trend-bar-bg"><div class="trend-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+          <span class="trend-pct" style="color:${tc}">${pct}%</span>
+        </div>`;
+      });
+      html+='</div>';
+    }
+    area.innerHTML=html;
+  }catch(e){
+    area.innerHTML='<div class="empty-state">불러오기 실패 — 배포 후 사용 가능해요</div>';
+  }
+}
+
+function copyLink(student){
+  const el = document.getElementById(student==='이안'?'share-url-ian':'share-url-jae');
+  navigator.clipboard.writeText(el.textContent).then(()=>{
+    alert(`${student} 학부모 링크가 복사됐어요!`);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
